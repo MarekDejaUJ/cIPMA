@@ -67,3 +67,32 @@ get_rescaled_scores <- function(model, scales) {
 
   return(rescaled_scores)
 }
+
+#' Convert bnlearn Arcs to seminr Paths
+#'
+#' @param learned_graph A bnlearn object (bn).
+#' @return A seminr structural model object.
+#' @keywords internal
+arcs_to_seminr <- function(learned_graph) {
+  if (!requireNamespace("bnlearn", quietly = TRUE)) {
+    stop("Package 'bnlearn' is required for this function.")
+  }
+
+  arc_matrix <- bnlearn::arcs(learned_graph)
+
+  if (nrow(arc_matrix) == 0) {
+    return(NULL)
+  }
+
+  targets <- unique(arc_matrix[, "to"])
+  sm_list <- list()
+
+  for (t in targets) {
+    sources <- arc_matrix[arc_matrix[, "to"] == t, "from"]
+    # Create the path using seminr syntax
+    sm_list[[length(sm_list) + 1]] <- seminr::paths(from = sources, to = t)
+  }
+
+  # Combine all paths into a relationship object
+  return(do.call(seminr::relationships, sm_list))
+}
