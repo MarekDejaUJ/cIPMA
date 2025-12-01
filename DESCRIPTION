@@ -1,0 +1,23 @@
+Package: cIPMA
+Type: Package
+Title: Combined Importance-Performance Map Analysis
+Version: 0.1.0
+Author: Marek Deja
+Maintainer: Marek Deja <marek.deja@uj.edu.pl>
+Description: Implements the Combined Importance-Performance Map Analysis (cIPMA) 
+    approach proposed by Hauff et al. (2024). It combines PLS-SEM importance-performance 
+    results (using 'seminr') with Necessary Condition Analysis (using 'NCA') to 
+    identify sufficiency and necessity factors in partial least squares structural 
+    equation modeling.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Imports:
+    seminr,
+    NCA,
+    ggplot2,
+    ggrepel,
+    stats
+RoxygenNote: 7.3.3
+URL: https://github.com/MarekDejaUJ/cIPMA
+BugReports: https://github.com/MarekDejaUJ/cIPMA/issue

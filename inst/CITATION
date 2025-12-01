@@ -1,0 +1,23 @@
+bibentry("Article",
+  title        = "Importance and performance in PLS-SEM and NCA: Introducing the combined importance-performance map analysis (cIPMA)",
+  author       = c(as.person("Sven Hauff"), as.person("Nicole Franziska Richter"), as.person("Marko Sarstedt"), as.person("Christian M. Ringle")),
+  journal      = "Journal of Retailing and Consumer Services",
+  year         = "2024",
+  volume       = "78",
+  pages        = "103723",
+  doi          = "10.1016/j.jretconser.2024.103723",
+  header       = "To cite the cIPMA package in publications use also:",
+  textVersion  = "Hauff, S., Richter, N. F., Sarstedt, M., & Ringle, C. M. (2024). Importance and performance in PLS-SEM and NCA: Introducing the combined importance-performance map analysis (cIPMA). Journal of Retailing and Consumer Services, 78, 103723."
+)
+
+bibentry("Article",
+  title        = "Necessary Condition Analysis (NCA): Logic and Methodology of 'Necessary but not Sufficient' Causality",
+  author       = as.person("Jan Dul"),
+  journal      = "Organizational Research Methods",
+  year         = "2016",
+  volume       = "19",
+  number       = "1",
+  pages        = "10-52",
+  doi          = "10.1177/1094428115584005",
+  header       = "This package also relies on the Necessary Condition Analysis (NCA) method:"
+)
