@@ -8,11 +8,11 @@
 #' @param scales A named list of theoretical min/max for indicators (e.g., list(item1=c(1,5))).
 #' @param target_level Numeric. The desired level of the target construct (0-100 scale). Default is 85.
 #' @param nca_rep Integer. Number of permutations for NCA. Default 10000.
-#' @importFrom seminr estimate_pls
+#'
 #' @importFrom NCA nca_analysis
 #' @importFrom stats pnorm sd
 #' @export
-cipma <- function(model, target_construct, data, scales, target_level = 85, nca_rep = 5000) {
+cipma <- function(model, target_construct, data, scales, target_level = 85, nca_rep = 10000) {
 
   # --- 1. Extract PLS-SEM Info (Importance) ---
 
@@ -44,7 +44,7 @@ cipma <- function(model, target_construct, data, scales, target_level = 85, nca_
     stringsAsFactors = FALSE
   )
 
-  # --- 2. Calculate Rescaled Performance Scores (Logic Match) ---
+  # --- 2. Calculate Rescaled Performance Scores ---
 
   # A) Rescale indicators to 0-100
   rescaled_data <- data
@@ -55,8 +55,6 @@ cipma <- function(model, target_construct, data, scales, target_level = 85, nca_
   }
 
   # B) Calculate Unstandardized Weights
-  # seminr provides standardized weights. To get scores for rescaled data,
-  # we must divide weights by the SD of the ORIGINAL data.
   outer_weights_std <- model$outer_weights
   unstandardized_weights <- outer_weights_std
   indicator_names <- rownames(outer_weights_std)
@@ -70,7 +68,7 @@ cipma <- function(model, target_construct, data, scales, target_level = 85, nca_
     }
   }
 
-  # C) Normalize Unstandardized Weights (Sum to 1)
+  # C) Normalize Unstandardized Weights
   normalized_weights <- unstandardized_weights
   for (constr in colnames(unstandardized_weights)) {
     w_vec <- unstandardized_weights[, constr]
@@ -83,9 +81,7 @@ cipma <- function(model, target_construct, data, scales, target_level = 85, nca_
   }
 
   # D) Calculate Scores
-  # Only use indicators that exist in both the weights and the rescaled data
   valid_indicators <- indicator_names[indicator_names %in% colnames(rescaled_data)]
-
   rescaled_indicator_matrix <- as.matrix(rescaled_data[, valid_indicators])
   valid_norm_weights <- normalized_weights[valid_indicators, ]
 
@@ -152,14 +148,22 @@ cipma <- function(model, target_construct, data, scales, target_level = 85, nca_
     stringsAsFactors = FALSE
   )
 
-  # --- 4. Extract Bottlenecks (Snapping Logic) ---
+  # --- 4. Extract Bottlenecks (FIXED) ---
   bottleneck_full <- nca_res$bottlenecks$ce_fdh
-  y_values <- as.numeric(rownames(bottleneck_full))
+
+  # FIX: Determine Y-values correctly by looking at the column, not rownames
+  if (target_construct %in% colnames(bottleneck_full)) {
+    y_values <- as.numeric(bottleneck_full[[target_construct]])
+  } else {
+    # Fallback: NCA often puts Y in the first column
+    y_values <- as.numeric(bottleneck_full[, 1])
+  }
+
+  # Find the row closest to target_level
   target_row_idx <- which.min(abs(y_values - target_level))
   raw_thresholds <- bottleneck_full[target_row_idx, predictors, drop = FALSE]
 
-  # Calculate snapped thresholds (closest observed value)
-  # This mimics the "my script" logic provided in the prompt
+  # Snapping Logic: Find closest observed value
   bottleneck_thresholds <- sapply(predictors, function(c) {
     reported_val <- suppressWarnings(as.numeric(as.character(raw_thresholds[[c]])))
     if (is.na(reported_val)) return(NA)
@@ -196,7 +200,6 @@ cipma <- function(model, target_construct, data, scales, target_level = 85, nca_
       nca_stats$cases_below_req[i] <- 0
       nca_stats$percent_below_req[i] <- 0
     } else {
-      # Count strictly less than the *closest observed value* threshold
       below_count <- sum(lv_df[[pred]] < thr, na.rm = TRUE)
       nca_stats$cases_below_req[i] <- below_count
       nca_stats$percent_below_req[i] <- (below_count / nrow(lv_df)) * 100
@@ -207,7 +210,7 @@ cipma <- function(model, target_construct, data, scales, target_level = 85, nca_
 
   table_B <- data.frame(
     Construct = predictors,
-    Required_Level_for_Target = bottleneck_thresholds, # Showing the snapped threshold
+    Required_Level_for_Target = bottleneck_thresholds,
     Fail_Percentage = nca_stats$percent_below_req,
     Fail_Count = nca_stats$cases_below_req
   )
