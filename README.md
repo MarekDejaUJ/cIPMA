@@ -1,6 +1,6 @@
 # cIPMA: Combined Importance-Performance Map Analysis
 
-[cite_start]The **cIPMA** package implements the Combined Importance-Performance Map Analysis approach proposed by [Hauff et al. (2024)](https://doi.org/10.1016/j.jretconser.2024.103723)[cite: 8]. [cite_start]It integrates results from PLS-SEM (using `seminr`) [cite: 21, 40] [cite_start]with Necessary Condition Analysis (using `NCA`) [cite: 18, 67] to identify both sufficiency and necessity factors.
+The **cIPMA** package implements the Combined Importance-Performance Map Analysis approach proposed by [Hauff et al. (2024)](https://doi.org/10.1016/j.jretconser.2024.103723). It integrates results from PLS-SEM (using `seminr`) with Necessary Condition Analysis (using `NCA`) to identify both sufficiency and necessity factors.
 
 ## Installation
 
@@ -81,6 +81,24 @@ ggsave(
 )
 ```
 
+### Data-Driven Analysis (Causal Discovery)
+
+If you do not have a pre-defined structural model, you can use the `discovery_cipma` function. [cite_start]This uses the Hill-Climbing algorithm from the `bnlearn` package [cite: 11, 3316] to learn the causal structure from your data before running the standard cIPMA.
+
+```r
+# Run Data-Driven cIPMA
+result2 <- discovery_cipma(
+  data              = tam_data,
+  measurement_model = tam_mm,
+  target_construct  = "Technology_Use",
+  scales            = my_scales,  # your PU/CO/EOU/EMV/AD/USE scales
+  target_level      = 85
+)
+print(result2)
+
+plot(result2)
+```
+
 ## References
-* Hauff, S., Richter, N. F., Sarstedt, M., & Ringle, C. M. (2024). Importance and performance in PLS-SEM and NCA: Introducing the combined importance-performance map analysis (cIPMA). [cite_start]*Journal of Retailing and Consumer Services*, 78, 103723. [cite: 8]
-* Dul, J. (2016). Necessary Condition Analysis (NCA). Logic and Methodology of 'Necessary but not Sufficient' causality. [cite_start]*Organizational Research Methods*, 19(1), 10-52. [cite: 67]
+* Hauff, S., Richter, N. F., Sarstedt, M., & Ringle, C. M. (2024). Importance and performance in PLS-SEM and NCA: Introducing the combined importance-performance map analysis (cIPMA). *Journal of Retailing and Consumer Services*, 78, 103723.
+* Dul, J. (2016). Necessary Condition Analysis (NCA). Logic and Methodology of 'Necessary but not Sufficient' causality. *Organizational Research Methods*, 19(1), 10-52.
