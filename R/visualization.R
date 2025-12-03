@@ -16,7 +16,7 @@ plot.cipma <- function(x, ...) {
   df$Label <- df$Construct
   df$ColorGroup <- ifelse(df$Is_Necessary, "Necessary", "Not Necessary")
 
-  df$PlotSize <- ifelse(df$Is_Necessary, df$percent_below_req, 1)
+  df$PlotSize <- ifelse(df$Is_Necessary, df$Fail_Percentage, 1)
 
   imp_mean <- mean(df$Importance, na.rm = TRUE)
   perf_mean <- mean(df$Performance, na.rm = TRUE)

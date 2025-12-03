@@ -187,7 +187,13 @@ cipma <- function(model, target_construct, data, scales, target_level = 85, nca_
     bottleneck_results$Fail_Percentage[i] <- (count_below / nrow(lv_df)) * 100
   }
 
+
   final_table_A <- merge(pls_res, nca_stats, by = "Construct")
+
+
+  final_table_A <- merge(final_table_A,
+                         bottleneck_results[, c("Construct", "Fail_Percentage")],
+                         by = "Construct")
 
   output <- list(
     cIPMA_results = final_table_A,

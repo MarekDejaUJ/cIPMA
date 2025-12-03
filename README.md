@@ -8,7 +8,7 @@ You can install the development version of cIPMA like so:
 
 ```r
 # install.packages("devtools")
-devtools::install_github("yourusername/cIPMA")
+devtools::install_github("MarekDejaUJ/cIPMA")
 ```
 
 ## Example Usage
