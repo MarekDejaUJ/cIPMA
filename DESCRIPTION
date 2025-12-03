@@ -1,7 +1,7 @@
 Package: cIPMA
 Type: Package
 Title: Combined Importance-Performance Map Analysis
-Version: 0.1.5
+Version: 0.1.6
 Author: Marek Deja
 Maintainer: Marek Deja <marek.deja@uj.edu.pl>
 Description: Implements the Combined Importance-Performance Map Analysis (cIPMA) 
