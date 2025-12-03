@@ -83,7 +83,7 @@ ggsave(
 
 ### Data-Driven Analysis (Causal Discovery)
 
-If you do not have a pre-defined structural model, you can use the `discovery_cipma` function. [cite_start]This uses the Hill-Climbing algorithm from the `bnlearn` package [cite: 11, 3316] to learn the causal structure from your data before running the standard cIPMA.
+If you do not have a pre-defined structural model, you can use the `discovery_cipma` function. This uses the Hill-Climbing algorithm from the `bnlearn` package to learn the causal structure from your data before running the standard cIPMA.
 
 ```r
 # Run Data-Driven cIPMA
