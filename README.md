@@ -102,3 +102,5 @@ plot(result2)
 ## References
 * Hauff, S., Richter, N. F., Sarstedt, M., & Ringle, C. M. (2024). Importance and performance in PLS-SEM and NCA: Introducing the combined importance-performance map analysis (cIPMA). *Journal of Retailing and Consumer Services*, 78, 103723.
 * Dul, J. (2016). Necessary Condition Analysis (NCA). Logic and Methodology of 'Necessary but not Sufficient' causality. *Organizational Research Methods*, 19(1), 10-52.
+* Ray, S., Danks, N., & Calero Valdez, A. (2021). SEMinR: Domain-Specific Language for Building, Estimating, and Visualizing Structural Equation Models in R. SSRN Electronic Journal. https://doi.org/10.2139/ssrn.3900621
+
