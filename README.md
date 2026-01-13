@@ -58,16 +58,44 @@ my_scales <- list(
 
 # 5. Run cIPMA
 result <- cipma(
-  model = boot_tam, 
-  target_construct = "Technology_Use", 
-  data = tam_data, 
-  scales = my_scales, 
-  target_level = 85
+  model = boot_tam,
+  target_construct = "Technology_Use",
+  data = tam_data,
+  scales = my_scales,
+  target_level = 85,
+  pls_model = tam_pls
 )
 
 # 6. Outputs
 print(result) # Prints Table A (Stats) and Table B (Bottlenecks)
 my_cipma_plot <- plot(result) # Generates the Figure
+
+
+check_assumptions(result) # Check assumptions of PLS-SEM
+```
+
+
+## Access individual components
+
+```r
+# Combined PLS-SEM and NCA statistics
+result$cIPMA_results
+
+# Bottleneck at target level (85)
+result$Bottleneck_summary
+
+# Full bottleneck table (0-100 in 5% steps)
+result$Bottleneck_full
+
+# NCA analysis object
+result$NCA_summary
+
+# Rescaled construct scores (0-100)
+head(result$Data_Rescaled)
+
+# Access the PLS model
+result$PLS_Model
+
 
 # 7. Save Plot
 ggsave(
@@ -81,8 +109,8 @@ ggsave(
 )
 ```
 
-### Data-Driven Analysis (Causal Discovery)
 
+<<<<<<< HEAD
 If you do not have a pre-defined structural model, you can use the `discovery_cipma` function. This uses the Hill-Climbing algorithm from the `bnlearn` package to learn the causal structure from your data before running the standard cIPMA.
 
 ```r
@@ -98,9 +126,14 @@ print(result2)
 
 plot(result2)
 ```
+=======
+>>>>>>> d96ead1 (0.1.6)
 
 ## References
 * Hauff, S., Richter, N. F., Sarstedt, M., & Ringle, C. M. (2024). Importance and performance in PLS-SEM and NCA: Introducing the combined importance-performance map analysis (cIPMA). *Journal of Retailing and Consumer Services*, 78, 103723.
 * Dul, J. (2016). Necessary Condition Analysis (NCA). Logic and Methodology of 'Necessary but not Sufficient' causality. *Organizational Research Methods*, 19(1), 10-52.
 * Ray, S., Danks, N., & Calero Valdez, A. (2021). SEMinR: Domain-Specific Language for Building, Estimating, and Visualizing Structural Equation Models in R. SSRN Electronic Journal. https://doi.org/10.2139/ssrn.3900621
+<<<<<<< HEAD
 
+=======
+>>>>>>> d96ead1 (0.1.6)
