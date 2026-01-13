@@ -7,7 +7,7 @@
 \method{plot}{cipma}(x, ...)
 }
 \arguments{
-\item{x}{A cIPMA object returned by the `cipma()` function.}
+\item{x}{A cIPMA object returned by the cipma function.}
 
 \item{...}{Additional arguments (not used).}
 }

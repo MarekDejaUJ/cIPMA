@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils_data.R
 \name{get_rescaled_scores}
 \alias{get_rescaled_scores}
-\title{Unstandardize and Rescale Latent Variable Scores}
+\title{Get Rescaled Latent Variable Scores}
 \usage{
 get_rescaled_scores(model, scales)
 }

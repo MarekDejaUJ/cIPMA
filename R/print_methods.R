@@ -2,6 +2,7 @@
 #'
 #' @param x A cIPMA object.
 #' @param ... Ignored.
+#'
 #' @export
 print.cipma <- function(x, ...) {
   cat("=== Combined Importance-Performance Map Analysis (cIPMA) ===\n")
@@ -15,3 +16,6 @@ print.cipma <- function(x, ...) {
   cat("\n--- Table B: Bottleneck Summary ---\n")
   print(x$Bottleneck_summary)
 }
+
+
+utils::globalVariables(c("Importance", "Performance", "PlotSize", "ColorGroup", "Label", "Fail_Percentage", "Is_Necessary", "Construct"))

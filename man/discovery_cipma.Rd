@@ -2,7 +2,7 @@
 % Please edit documentation in R/discovery_cipma.R
 \name{discovery_cipma}
 \alias{discovery_cipma}
-\title{Run Data-Driven cIPMA (Causal Discovery)}
+\title{Run Data-Driven cIPMA with Causal Discovery}
 \usage{
 discovery_cipma(
   data,
@@ -11,31 +11,161 @@ discovery_cipma(
   scales,
   target_level = 85,
   nca_rep = 10000,
-  blacklist = NULL
+  algorithm = "hc",
+  blacklist = NULL,
+  whitelist = NULL,
+  algorithm.args = list(),
+  nboot = 1000
 )
 }
 \arguments{
-\item{data}{The raw data frame.}
+\item{data}{The raw data frame containing indicator variables.}
 
 \item{measurement_model}{A seminr measurement model object (defined with constructs()).}
 
-\item{target_construct}{String. The name of the dependent variable.}
+\item{target_construct}{String. The name of the dependent variable for cIPMA.}
 
-\item{scales}{A named list of theoretical min/max for indicators.}
+\item{scales}{A named list of theoretical min/max for each indicator.}
 
-\item{target_level}{Numeric. Desired target construct level (0–100). Default is 85.}
+\item{target_level}{Numeric. Desired target construct level (0-100). Default is 85.}
 
-\item{nca_rep}{Integer. Number of permutations for NCA. Default 10000.}
+\item{nca_rep}{Integer. Number of permutations for NCA significance. Default 10000.}
 
-\item{blacklist}{Optional. A data frame with columns 'from' and 'to' defining
-forbidden arcs for bnlearn::hc.}
+\item{algorithm}{Character. Causal discovery algorithm. Options:
+\itemize{
+  \item Score-based: \code{"hc"} (default), \code{"tabu"}
+  \item Constraint-based: \code{"pc"}, \code{"gs"}, \code{"iamb"}, \code{"fast.iamb"},
+        \code{"inter.iamb"}, \code{"mmpc"}, \code{"hpc"}
+  \item Hybrid: \code{"mmhc"}, \code{"h2pc"}, \code{"rsmax2"}
+}}
+
+\item{blacklist}{Optional. A data frame with columns 'from' and 'to' specifying
+forbidden arcs (e.g., based on temporal ordering or theory).}
+
+\item{whitelist}{Optional. A data frame with columns 'from' and 'to' specifying
+required arcs (e.g., well-established theoretical relationships).}
+
+\item{algorithm.args}{Optional. A list of additional arguments to pass to the
+bnlearn algorithm (e.g., \code{list(restart = 10)} for hc, \code{list(alpha = 0.01)}
+for constraint-based algorithms).}
+
+\item{nboot}{Integer. Number of bootstrap samples for PLS-SEM. Default 1000.
+Use lower values (e.g., 500) for faster exploratory runs.}
 }
 \value{
-A cIPMA object (same class as cipma()), with an additional
-  `learned_graph` element containing the bnlearn network.
+A cipma object with additional elements:
+\itemize{
+  \item \code{learned_graph}: The bnlearn network object
+  \item \code{discovered_arcs}: Data frame of discovered relationships
+  \item \code{algorithm}: The algorithm used for discovery
+}
 }
 \description{
-This function performs a Causal Discovery analysis using the Hill-Climbing
-algorithm (bnlearn) to learn the structural model from data, and then runs
-cIPMA on the discovered structure.
+This function performs causal discovery using constraint-based, score-based,
+or hybrid algorithms to learn the structural model from data,
+then runs cIPMA on the discovered structure. This exploratory approach is useful
+when theoretical guidance is limited or when researchers want to compare
+theory-driven and data-driven models.
+}
+\details{
+This function implements the causal discovery approach for PLS-SEM as discussed
+by Richter et al. (2020), who argue that combining causal discovery algorithms
+with PLS-SEM can be valuable for:
+\itemize{
+  \item Exploratory research where theory is underdeveloped
+  \item Model comparison (theory-driven vs. data-driven)
+  \item Identifying potentially missing paths in existing models
+  \item Cross-validation of theoretical assumptions
+}
+
+The function uses proxy scores (standardized mean of indicators) for structure
+learning, which is consistent with the composite-based nature of PLS-SEM.
+After structure learning, proper PLS-SEM estimation is performed on the
+original indicators.
+}
+\section{Available Algorithms}{
+
+\describe{
+  \item{Score-based (fast)}{
+    \itemize{
+      \item \code{"hc"}: Hill-Climbing (default) - greedy search, fastest
+      \item \code{"tabu"}: Tabu Search - avoids local optima
+    }
+  }
+  \item{Constraint-based}{
+    \itemize{
+      \item \code{"pc"}: PC algorithm (stable version)
+      \item \code{"gs"}: Grow-Shrink
+      \item \code{"iamb"}: Incremental Association Markov Blanket
+      \item \code{"fast.iamb"}: Fast IAMB
+      \item \code{"inter.iamb"}: Interleaved IAMB
+      \item \code{"mmpc"}: Max-Min Parents and Children
+      \item \code{"hpc"}: Hybrid Parents and Children
+    }
+  }
+  \item{Hybrid (recommended for robustness)}{
+    \itemize{
+      \item \code{"mmhc"}: Max-Min Hill-Climbing
+      \item \code{"h2pc"}: Hybrid HPC
+      \item \code{"rsmax2"}: General 2-phase Restricted Maximization
+    }
+  }
+}
+}
+
+\section{Runtime Note}{
+
+The main computational cost comes from PLS-SEM bootstrapping (Step 4), not
+structure learning. Consider reducing \code{nboot} (e.g., 500) for initial
+exploration, then increase for final results.
+}
+
+\section{Caution}{
+
+Results from causal discovery should be interpreted as exploratory hypotheses
+requiring theoretical justification and replication. The discovered structure
+represents statistical associations that may reflect causal relationships but
+cannot establish causality from observational data alone.
+}
+
+\examples{
+\dontrun{
+# Example with whitelist (required arcs) and blacklist (forbidden arcs)
+
+# Whitelist: Theory strongly supports these paths
+whitelist <- data.frame(
+  from = c("Quality", "Satisfaction"),
+  to = c("Satisfaction", "Loyalty")
+)
+
+# Blacklist: These paths are theoretically impossible
+blacklist <- data.frame(
+  from = c("Loyalty", "Loyalty"),
+  to = c("Quality", "Satisfaction")
+)
+
+# Run with hybrid algorithm (recommended)
+result <- discovery_cipma(
+  data = survey_data,
+  measurement_model = mm,
+  target_construct = "Loyalty",
+  scales = scales,
+  algorithm = "mmhc",
+  whitelist = whitelist,
+  blacklist = blacklist,
+  nboot = 500  # Lower for faster exploration
+)
+
+# View discovered structure
+print(result$discovered_arcs)
+}
+
+}
+\references{
+Richter, N. F., Schubring, S., Hauff, S., Ringle, C. M., & Sarstedt, M. (2020).
+When predictors of outcomes are necessary: Guidelines for the combined use of
+PLS-SEM and NCA. Industrial Management & Data Systems, 120(12), 2243-2267.
+
+Scutari, M. (2010). Learning Bayesian Networks with the bnlearn R Package.
+Journal of Statistical Software, 35(3), 1-22.
 }
