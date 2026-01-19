@@ -183,6 +183,11 @@ result_gs <- discovery_cipma(
 # View discovered structure
 print(result_discovery$discovered_arcs)
 plot(result_discovery$learned_graph)
+print(result_discovery)
+
+print(result_gs$discovered_arcs)
+plot(result_gs$learned_graph)
+print(result_gs)
 ```
 ### Performance Note (Constraint-Based Algorithms)
 Algorithms like gs (Grow-Shrink) or iamb rely on conditional independence tests. When applied to dense PLS-SEM datasets where constructs are highly correlated, these algorithms may become computationally prohibitive (taking hours or causing crashes).
@@ -215,6 +220,6 @@ If you use this package, please cite:
 
 ```
 Deja, M. (2025). cIPMA: Combined Importance-Performance Map Analysis. 
-R package version 0.2.0. https://github.com/MarekDejaUJ/cIPMA
+R package version 0.1.6. https://github.com/MarekDejaUJ/cIPMA
 ```
 
