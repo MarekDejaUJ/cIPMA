@@ -245,6 +245,36 @@ discovery_cipma <- function(data, measurement_model, target_construct, scales,
 
   arc_matrix <- bnlearn::arcs(learned_graph)
 
+  if (!bnlearn::directed(learned_graph)) {
+    message("    Note: Discovered structure contains undirected arcs. Orienting to DAG...")
+    tryCatch({
+      learned_graph <- bnlearn::cextend(learned_graph, strict = FALSE)
+      arc_matrix <- bnlearn::arcs(learned_graph)
+    }, error = function(e) {
+      warning("    Could not automatically orient all arcs. PLS-SEM may hang if cycles exist.")
+    })
+  }
+
+  if (!bnlearn::acyclic(learned_graph)) {
+    warning("    WARNING: The structure contains feedback loops (cycles)!\n",
+            "             PLS-SEM estimation will likely hang or fail.\n",
+            "             Action: Use a 'blacklist' to prevent reverse causality.")
+  }
+
+  if (!(target_construct %in% arc_matrix[, "to"])) {
+    dummy_result <- list(
+      learned_graph = learned_graph,
+      discovered_arcs = as.data.frame(arc_matrix),
+      algorithm = algorithm,
+      algorithm_type = algo_type,
+      error = paste0("Target construct '", target_construct, "' has no incoming arcs.")
+    )
+    message("\n[STOPPING] The causal algorithm found no predictors for '", target_construct, "'.")
+    message("           This often happens if 'alpha' is too low or 'max.sx' is too restrictive.")
+    message("           Returning the learned graph for inspection.")
+    return(dummy_result)
+  }
+
   if (nrow(arc_matrix) == 0) {
     stop("Causal discovery found no relationships. Consider:\n",
          "  - Adjusting algorithm parameters (e.g., alpha for constraint-based)\n",
