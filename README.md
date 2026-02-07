@@ -219,7 +219,8 @@ For rigorous analysis, use the theory-driven `cipma()` function with a pre-speci
 If you use this package, please cite:
 
 ```
-Deja, M. (2025). cIPMA: Combined Importance-Performance Map Analysis. 
-R package version 0.1.6. https://github.com/MarekDejaUJ/cIPMA
+Deja, M. (2026). cIPMA: An R package for combined importance–performance map analysis. *SoftwareX, 34*, 102552. https://doi.org/10.1016/j.softx.2026.102552
+
 ```
+
 
