@@ -1,4 +1,4 @@
-# cIPMA: Combined Importance-Performance Map Analysis
+mi# cIPMA: Combined Importance-Performance Map Analysis
 
 [![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen)](https://github.com/MarekDejaUJ/cIPMA)
 [![License: GPL-3](https://img.shields.io/badge/License-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
@@ -219,7 +219,7 @@ For rigorous analysis, use the theory-driven `cipma()` function with a pre-speci
 If you use this package, please cite:
 
 ```
-Deja, M. (2026). cIPMA: An R package for combined importance–performance map analysis. *SoftwareX, 34*, 102552. https://doi.org/10.1016/j.softx.2026.102552
+Deja, M. (2026). cIPMA: An R package for combined importance–performance map analysis. SoftwareX, 34, 102552. https://doi.org/10.1016/j.softx.2026.102552
 
 ```
 
