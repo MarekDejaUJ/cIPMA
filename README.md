@@ -2,6 +2,8 @@
 
 [![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen)](https://github.com/MarekDejaUJ/cIPMA)
 [![License: GPL-3](https://img.shields.io/badge/License-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18656579.svg)](https://doi.org/10.5281/zenodo.18656579)
+
 
 The **cIPMA** package implements the Combined Importance-Performance Map Analysis framework proposed by [Hauff et al. (2024)](https://doi.org/10.1016/j.jretconser.2024.103723). It integrates PLS-SEM importance-performance analysis (via `seminr`) with Necessary Condition Analysis (via `NCA`) to jointly assess sufficiency and necessity of predictors in structural equation models.
 
