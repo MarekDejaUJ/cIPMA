@@ -9,3 +9,4 @@
 *.png
 !man/figures/*.png
 tam.csv
+docs/

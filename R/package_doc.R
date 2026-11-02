@@ -19,5 +19,7 @@
 #' "necessary but not sufficient" causality. Organizational Research Methods,
 #' 19(1), 10-52. \doi{10.1177/1094428115584005}
 #'
+#' @name cIPMA-package
+#' @aliases cIPMA-package
 #' @keywords internal
-"_PACKAGE"
+NULL

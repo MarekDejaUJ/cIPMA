@@ -1,0 +1,133 @@
+---
+title: "QNCA diagnostics in cIPMA"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+`cipma_diagnostics()` runs the diagnostics of Quantile Necessary Condition Analysis (QNCA; Deja 2026) on every predictor of a combined importance-performance map analysis (cIPMA), with the rescaled latent variable scores and the empirical scope of each pair of predictor and target construct. The scope is the rectangle between the observed minimum and maximum of both scores. The tolerance `pi` in (0, 1] lets the share `1 - pi` of the successful cases, the cases that attain a target level, sit below the requirement of the predictor, and the effect size `d_pi` is the share of the scope in the empty zone to the left of the QNCA frontier at `pi`. At `pi = 1` the QNCA frontier equals the CE-FDH ceiling of Necessary Condition Analysis (NCA; Dul 2016).
+
+The reference band compares the observed effect size with a benchmark that keeps the dependence of the pair, the deletion screen and the addition screen measure the influence of single cases, the resolution table gives the rank behind each bottleneck, and the consistency probe follows the effect size across subsample sizes.
+
+The example uses the `mobi` data of `seminr`, customers of a mobile phone provider in the European customer satisfaction index model, with loyalty at level 80 of 100 as the target and the tolerance `pi = 0.95` for the bottleneck.
+
+```{r diagnostics-model, message = FALSE}
+library(cIPMA)
+library(seminr)
+mm <- constructs(
+  composite("Image", multi_items("IMAG", 1:5)),
+  composite("Expectation", multi_items("CUEX", 1:3)),
+  composite("Quality", multi_items("PERQ", 1:7)),
+  composite("Value", multi_items("PERV", 1:2)),
+  composite("Satisfaction", multi_items("CUSA", 1:3)),
+  composite("Complaints", single_item("CUSCO")),
+  composite("Loyalty", multi_items("CUSL", 1:3))
+)
+sm <- relationships(
+  paths(from = "Image", to = c("Expectation", "Satisfaction", "Loyalty")),
+  paths(from = "Expectation", to = c("Quality", "Value", "Satisfaction")),
+  paths(from = "Quality", to = c("Value", "Satisfaction")),
+  paths(from = "Value", to = "Satisfaction"),
+  paths(from = "Satisfaction", to = c("Complaints", "Loyalty")),
+  paths(from = "Complaints", to = "Loyalty")
+)
+pls <- estimate_pls(mobi, mm, sm)
+boot <- bootstrap_model(pls, nboot = 200, cores = 1, seed = 123)
+scales <- setNames(rep(list(c(1, 10)), ncol(mobi)), names(mobi))
+res <- cipma(boot, "Loyalty", mobi, scales, target_level = 80, pi = 0.95,
+             B = 499, seed = 1, pls_model = pls)
+res
+```
+
+The example draws 200 bootstrap resamples and 499 permutations, which keeps the computation short. The number of bootstrap resamples is a choice of the analyst in `bootstrap_model()`, and `cipma()` draws 1999 permutations by default.
+
+## Running the diagnostics
+
+The argument `points` of `cipma_diagnostics()` declares the position of the cases that the addition screen adds. The position `c(30, 95)` describes an efficient success, with a predictor score of 30 and loyalty of 95, and the position lies inside the empirical scope of every pair.
+
+```{r diagnostics-ranges}
+round(sapply(res$Data_Rescaled, range), 1)
+```
+
+The highest of the lowest predictor scores is 27.6, for satisfaction, and loyalty reaches 100, so the added cases at predictor score 30 and loyalty 95 fall inside every scope.
+
+```{r diagnostics-run}
+dg <- cipma_diagnostics(res, points = c(30, 95), seed = 1)
+dg
+```
+
+The diagnostics use the tolerances 1.00, 0.95 and 0.90 and a grid of 50 outcome levels, 199 benchmark datasets for the band and 50 subsamples per size for the probe, the defaults of `cipma_diagnostics()`. On the grid, the effect size at `pi = 1` differs from the exact CE-FDH effect size of `cipma()` by the error of the grid: 0.152 against 0.151 for image, and 0.014 against 0.016 for value.
+
+## Reference band
+
+The reference band draws benchmark datasets from a Gaussian copula that keeps the empirical marginals of the predictor and the target construct and the normal-score rank correlation of the pair, so the scatter of each benchmark dataset follows a smooth monotone dependence, free of an attainability floor (Deja 2026). The full QNCA estimator runs on every benchmark dataset at every tolerance on the same grid and scope. The column `upper` gives the 97.5th percentile of the benchmark effect sizes, `excess` the observed effect size minus the upper limit, and `p_null` the share of benchmark effect sizes at least as large as the observed effect size, with one added to the count and to the number of datasets. `Above_band` reads yes when the excess is positive.
+
+Every excess in the example is negative, from -0.187 for value at `pi = 1.00` to -0.021 for image at `pi = 0.90`, and every predictor stays within the band at the three tolerances. Within the band, the empty zone keeps the size that the marginals and the rank dependence of the pair reproduce alone. Image, expectation, quality and satisfaction meet the necessity rule of `cipma()` with the permutation test, which compares the effect size with independent shuffles of the target construct, and the band withholds support for necessity beyond the dependence-matched benchmark and leaves the necessity hypotheses open.
+
+The band targets spuriousness, an empty zone produced by dependence and skewness, a failure mode distinct from outlier-fragility. The band benchmarks the effect size and leaves the QNCA estimator, the effect size and the bottleneck as defined. The reference band is a proposed diagnostic with operating characteristics still to be established (Deja 2026). The Gaussian copula reproduces a smooth monotone dependence and leaves arbitrary tail dependence, latent classes and several sufficient pathways outside the benchmark, and the band holds pointwise at each tolerance.
+
+## Deletion screen
+
+The deletion screen removes each case in turn (`k = 1`) and recomputes the effect size on the scope of the full sample at each tolerance. The printed table gives, for each predictor, the case whose deletion changes the effect size most, the relative change of `d_pi` at 1.00, 0.95 and 0.90 after the deletion of the case, and the number of deletions with a relative change of at least 0.01 at some tolerance (`Flagged_rows`). The element `outliers` of each predictor holds the full screen.
+
+```{r diagnostics-deletion}
+head(dg$results$Image$outliers$table, 3)
+```
+
+For image, the deletion of case 28 raises the effect size at `pi = 1` from 0.152 to 0.181, a relative change of 0.191, with relative changes of 0.044 at `pi = 0.95` and 0.007 at `pi = 0.90`. The strict boundary of image rests on one customer, whereas the tolerant members change little after the same deletion, and the deletion screen reports the outlier-fragility of the strict member that the tolerance path, the effect size from `pi = 1.00` to `pi = 0.90`, also shows (Deja 2026). Value shows the largest relative change, 2.403 for case 242 at `pi = 1.00`, because the strict effect size of value lies close to zero.
+
+## Resolution table
+
+The resolution table follows the bottleneck at the tolerance of the cIPMA, `pi = 0.95`, target by target on the grid of 50 outcome levels (Deja 2026). For each target the table gives the number `k` of successful cases, the selected rank `max(1, ceiling(k * (1 - pi)))`, the raw order statistic, the requirement after the running maximum across targets, the flag of a requirement inherited from a lower target, the number and share of successful cases below the requirement, and the resistance, the rank minus 1. The printed table counts, for the targets up to the target level, the targets, the inherited requirements, the smallest resistance and the smallest attaining set.
+
+```{r diagnostics-resolution}
+r <- dg$results$Image$resolution
+r <- r[r$y >= 65 & r$y <= 80, ]
+data.frame(y = round(r$y, 2), k = r$k, rank = r$rank, raw = round(r$raw, 3),
+           fitted = round(r$fitted, 3), inherited = r$inherited, below = r$below,
+           share = round(r$exception_share, 3), resistance = r$resistance)
+```
+
+At the highest target up to 80, loyalty of 79.77, 104 customers attain the target, the rank is 6 and the requirement of image is 63.566 with resistance 5: the raw requirement absorbs five added efficient cases and stays at or above the lowest image score of the original successful customers (Deja 2026). At loyalty of 67.63, 69.66 and 71.68 the requirement of 59.357 is inherited from a lower target, and the share of successful customers below the requirement, 0.052, 0.056 and 0.051, exceeds `1 - pi`: an inherited requirement can exceed the tolerance when the exceptions admitted at a lower target concentrate among the cases that attain the higher target. Over the 40 targets up to 80, image inherits the requirement at 6 targets, and every predictor keeps a resistance of at least 5 and an attaining set of at least 104 customers.
+
+## Consistency probe
+
+The consistency probe draws 50 subsamples without replacement at each of four sizes, a quarter, a half, three quarters and the whole of the sample, and averages `d_pi` at `pi = 1` and at the lowest tolerance of the grid, `pi = 0.90`, on the scope of the full sample. The drift slope is the least-squares slope of the mean effect size on the inverse subsample size, and the divergence is the absolute drift slope at `pi = 1` minus the absolute drift slope at `pi = 0.90`.
+
+```{r diagnostics-probe}
+dg$results$Image$probe$summary
+```
+
+The mean strict effect size of image falls from 0.280 in subsamples of 62 customers to 0.152 in the whole sample, whereas the mean effect size at `pi = 0.90` stays between 0.493 and 0.500. The strict effect size, built on the minimum of each attaining set, depends on the sample size, and the tolerant effect size stays stable; the drift slopes of image are 10.263 and 0.255, with a divergence of 10.008. Every predictor shows a positive divergence, from 6.167 for complaints to 10.615 for value. The probe is a descriptive check of subsample stability, and hard bounds of the support, for example the limits of a rescaled 0–100 scale, and skewed marginals can confound the probe.
+
+## Addition screen
+
+With `points`, the addition screen adds 0 to 5 cases at the declared position and recomputes `d_pi` on the scope of the original sample (Deja 2026). The addition screen stays outside the printed tables, and the element `sensitivity` of each predictor holds the effect sizes.
+
+```{r diagnostics-addition}
+s <- dg$results$Image$sensitivity
+d_added <- round(s$d, 3)
+dimnames(d_added) <- list(added = s$counts, pi = format(s$pi))
+d_added
+```
+
+One added case at image 30 and loyalty 95 lowers the strict effect size of image from 0.152 to 0.049, because the added case attains every target up to 95 and lowers the strict requirement of each of the targets to at most 30. At `pi = 0.95` one added case lowers `d_pi` from 0.404 to 0.392 and five added cases to 0.303, and at `pi = 0.90` five added cases lower `d_pi` from 0.496 to 0.455. At a target with rank `h` above the number `c` of added cases, the requirement stays at or above the order statistic of rank `h - c` among the original successful customers. Each added case therefore lowers the requirement by at most one spacing between the image scores of the original successful customers, and the loss of the tolerant members grows step by step with the number of added cases (Deja 2026).
+
+## Report
+
+`cipma_report()` writes the full summary of the cIPMA as a Markdown report, and adds the tables of the diagnostics with the argument `diagnostics`.
+
+```{r diagnostics-report}
+report_file <- tempfile(fileext = ".md")
+report <- cipma_report(res, file = report_file, diagnostics = dg)
+length(report)
+grep("^#", report, value = TRUE)
+```
+
+The report of the example holds 144 lines, with the combined map, the PLS-SEM significance, the readings, the two tolerance paths, the bottleneck table and the QNCA diagnostics.
+
+## References
+
+- Deja, M. (2026). Quantile Necessary Condition Analysis: A Tolerance-Parameterized Generalization of Necessary Condition Analysis. *Quality & Quantity* (accepted for publication).
+- Dul, J. (2016). Necessary Condition Analysis (NCA): Logic and methodology of "necessary but not sufficient" causality. *Organizational Research Methods*, 19(1), 10–52. <https://doi.org/10.1177/1094428115584005>

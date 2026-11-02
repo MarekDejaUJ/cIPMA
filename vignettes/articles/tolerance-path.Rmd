@@ -1,0 +1,130 @@
+---
+title: "The tolerance path"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+A bottleneck states the level of a predictor required for a target level of the target construct. Necessary Condition Analysis (NCA) with the CE-FDH ceiling sets the requirement at the lowest predictor score among the successful cases, the cases that attain the target level, so the single most efficient successful case, the one with the lowest predictor score, sets the requirement (Dul 2016). Quantile Necessary Condition Analysis (QNCA) adds the tolerance `pi` in (0, 1]: the requirement is the type-1 quantile at probability `1 - pi` of the predictor scores among the successful cases, and the share `1 - pi` of the successful cases may sit below the requirement (Deja 2026). At `pi = 1` the QNCA frontier equals the CE-FDH ceiling.
+
+For a target attained by `k` successful cases, the quantile is the order statistic of rank `max(1, ceiling(k * (1 - pi)))`. Across targets, a running maximum makes the frontier non-decreasing, so a requirement reached at a lower target carries to every higher target (Deja 2026).
+
+The example uses the `mobi` data of `seminr`, customers of a mobile phone provider in the European customer satisfaction index model, with loyalty at level 80 of 100 as the target and the tolerance `pi = 0.95` for the bottleneck.
+
+```{r path-model, message = FALSE}
+library(cIPMA)
+library(seminr)
+mm <- constructs(
+  composite("Image", multi_items("IMAG", 1:5)),
+  composite("Expectation", multi_items("CUEX", 1:3)),
+  composite("Quality", multi_items("PERQ", 1:7)),
+  composite("Value", multi_items("PERV", 1:2)),
+  composite("Satisfaction", multi_items("CUSA", 1:3)),
+  composite("Complaints", single_item("CUSCO")),
+  composite("Loyalty", multi_items("CUSL", 1:3))
+)
+sm <- relationships(
+  paths(from = "Image", to = c("Expectation", "Satisfaction", "Loyalty")),
+  paths(from = "Expectation", to = c("Quality", "Value", "Satisfaction")),
+  paths(from = "Quality", to = c("Value", "Satisfaction")),
+  paths(from = "Value", to = "Satisfaction"),
+  paths(from = "Satisfaction", to = c("Complaints", "Loyalty")),
+  paths(from = "Complaints", to = "Loyalty")
+)
+pls <- estimate_pls(mobi, mm, sm)
+boot <- bootstrap_model(pls, nboot = 200, cores = 1, seed = 123)
+scales <- setNames(rep(list(c(1, 10)), ncol(mobi)), names(mobi))
+res <- cipma(boot, "Loyalty", mobi, scales, target_level = 80, pi = 0.95,
+             B = 499, seed = 1, pls_model = pls)
+```
+
+The example draws 200 bootstrap resamples and 499 permutations, which keeps the computation short. The number of bootstrap resamples is a choice of the analyst in `bootstrap_model()`, and `cipma()` draws 1999 permutations by default.
+
+## The requirement at two tolerances
+
+The requirement of image for loyalty of at least 80 follows from the customers who attain the target. The rescaled scores of `cipma()` give the successful customers, and the tolerance path of `cipma()` gives the requirement at `pi = 1` and at `pi = 0.95`.
+
+```{r path-image}
+x <- res$Data_Rescaled$Image
+y <- res$Data_Rescaled$Loyalty
+successful <- y >= 80
+k <- sum(successful)
+path <- res$Tolerance_Path[res$Tolerance_Path$Construct == "Image", ]
+required <- sapply(c(1, 0.95), function(p) path$Required_Level[abs(path$pi - p) < 1e-9])
+data.frame(
+  pi = c(1, 0.95),
+  successful = k,
+  rank = sapply(c(1, 0.95), function(p) qnca::qnca_rank(k, p)),
+  required = round(required, 3),
+  successful_below = sapply(required, function(r) sum(x[successful] < r)),
+  all_below = sapply(required, function(r) sum(x < r))
+)
+round(sort(x[successful])[1:6], 3)
+```
+
+At `pi = 1` the requirement, 39.448, is the lowest image score among the 102 customers with loyalty of at least 80, and every successful customer holds at least the requirement. At `pi = 0.95` the rank is 6, the requirement is the sixth smallest image score, 63.566, and 5 successful customers sit below the requirement, within the tolerance of 5% of 102. The tolerance counts successful customers, whereas the share of failing cases of the cIPMA counts all customers: 54 of all customers lie below the requirement at `pi = 0.95` and 4 at `pi = 1`.
+
+## Tail size
+
+The rank grows with the number of successful cases, and a small set of successful cases leaves the rank at 1.
+
+```{r path-rank}
+sapply(c(20, 21, k), qnca::qnca_rank, pi = 0.95)
+```
+
+With 20 successful cases the rank at `pi = 0.95` is 1, the minimum and the strict requirement, and with 21 successful cases the rank is 2. High targets that few cases attain therefore keep the strict requirement at a tolerance below 1, and a report marks the bottlenecks of high targets as limited by tail size (Deja 2026).
+
+## Necessity at the strict limit
+
+`cipma()` decides necessity at `pi = 1`: a predictor is necessary when the CE-FDH effect size `d` reaches 0.10 and the permutation p-value stays below 0.05. The landmark of 0.10 belongs to the CE-FDH effect size of NCA (Dul 2016). The effect size `d_pi` at a tolerance below 1 measures the empty zone to the left of the QNCA frontier at `pi`, a frontier that lies on or above the CE-FDH ceiling, so `d_pi` rises as `pi` falls. Effect sizes at `pi < 1` are relative to the tolerance and compare predictors at one tolerance, and the NCA landmark of 0.10 applies at `pi = 1`.
+
+The analyst fixes the tolerance of the bottleneck before the analysis, on substantive grounds and independently of the resulting p-value, and keeps `pi = 1` as the anchor of NCA (Deja 2026).
+
+## The path from 1.00 to 0.90
+
+`cipma()` computes the effect size and the required level at the target for every tolerance of the argument `pi_path`, by default 1.00 to 0.90 in steps of 0.01. `summary(res, detail = "full")` prints both paths and the bottleneck table across outcome levels at the chosen tolerance.
+
+```{r path-summary}
+summary(res, detail = "full")
+```
+
+The effect size of image grows from 0.151 at `pi = 1.00` to 0.497 at `pi = 0.90`, and the required level of image for loyalty of at least 80 grows from 39.448 to 70.452. The largest step of the effect size of image lies between `pi = 1.00` and `pi = 0.99`, from 0.151 to 0.224.
+
+At `pi = 1.00` the requirement of value for loyalty of at least 80 equals the lowest value score of the sample, which the bottleneck table marks as NN, no requirement. At `pi = 0.99` the requirement of value is 4.456 and at `pi = 0.98` 31.076, while the effect size of value rises from 0.016 at `pi = 1.00` to 0.236 at `pi = 0.98`.
+
+```{r path-value}
+round(sort(res$Data_Rescaled$Value[successful])[1:3], 3)
+round(min(res$Data_Rescaled$Value), 3)
+```
+
+One successful customer has a value score of 0, the lowest value score of the sample, and places the strict requirement of value at the bottom of the scope. The second smallest value score among the successful customers, 4.456, is the requirement at `pi = 0.99`.
+
+## Reading the path
+
+The tolerance path describes how far the strict boundary rests on the most efficient successful cases. A steep path flags outlier-fragility: the CE-FDH bottleneck of the target depends on one or a few cases, and the effect size moves once the tolerance admits the efficient cases below the requirement. A flat path over the tolerances fixed before the analysis suggests limited dependence on the cases with the lowest predictor scores (Deja 2026). The path leaves spuriousness, an empty zone produced by correlation, skewness or sufficiency, outside the diagnosis, because every member of the path may move together.
+
+`plot(res, type = "path")` draws the effect size of every predictor across the tolerances. The path rises or stays level for every predictor, because the frontier at a lower tolerance lies on or above the frontier at a higher tolerance (Deja 2026).
+
+```{r path-plot-d, fig.width = 7.5, fig.height = 5, fig.cap = "Effect size of each predictor of loyalty from pi = 1.00 to pi = 0.90 in steps of 0.01 for the mobi data. The value at pi = 1.00 is the CE-FDH effect size of NCA; the values at pi < 1 are relative to the tolerance."}
+plot(res, type = "path")
+```
+
+`plot(res, type = "bottleneck")` draws the required level of every predictor for the target level across the tolerances.
+
+```{r path-plot-bottleneck, fig.width = 7.5, fig.height = 5, fig.cap = "Required level of each predictor for loyalty of at least 80, on the rescaled 0–100 scale, from pi = 1.00 to pi = 0.90 in steps of 0.01. A missing point marks a tolerance at which the requirement equals the lowest score of the predictor (NN)."}
+plot(res, type = "bottleneck")
+```
+
+The required level of complaints jumps from 11.111 at `pi = 0.97` to 44.444 at `pi = 0.96`. Complaints is a single item, and the rescaled scores of complaints take few distinct values.
+
+```{r path-complaints}
+sort(unique(round(res$Data_Rescaled$Complaints, 3)))
+```
+
+The ten rescaled values of complaints lie 11.111 apart, so the required level of complaints moves in steps of at least 11.111, and a path in large steps reflects the discrete scale of the predictor.
+
+## References
+
+- Deja, M. (2026). Quantile Necessary Condition Analysis: A Tolerance-Parameterized Generalization of Necessary Condition Analysis. *Quality & Quantity* (accepted for publication).
+- Dul, J. (2016). Necessary Condition Analysis (NCA): Logic and methodology of "necessary but not sufficient" causality. *Organizational Research Methods*, 19(1), 10–52. <https://doi.org/10.1177/1094428115584005>

@@ -1,0 +1,57 @@
+url: https://marekdejauj.github.io/cIPMA/
+
+template:
+  bootstrap: 5
+  bslib:
+    primary: "#555555"
+
+navbar:
+  structure:
+    left: [reference, articles, news]
+    right: [search, github]
+  components:
+    articles:
+      text: Articles
+      menu:
+      - text: The cIPMA procedure
+        href: articles/cipma.html
+      - text: Reading the combined map
+        href: articles/reading-the-map.html
+      - text: The tolerance path
+        href: articles/tolerance-path.html
+      - text: QNCA diagnostics in cIPMA
+        href: articles/diagnostics.html
+      - text: Reproducing the cIPMA of Hauff et al. (2024)
+        href: articles/reproduction.html
+
+articles:
+- title: Articles
+  contents:
+  - articles/cipma
+  - articles/reading-the-map
+  - articles/tolerance-path
+  - articles/diagnostics
+  - articles/reproduction
+
+reference:
+- title: Analysis
+  contents:
+  - cipma
+  - discovery_cipma
+- title: Results
+  contents:
+  - summary.cipma
+  - print.cipma
+  - plot.cipma
+  - cipma_report
+- title: Diagnostics
+  contents:
+  - cipma_diagnostics
+  - check_assumptions
+  - print.cipma_assumptions
+- title: Scores
+  contents:
+  - get_rescaled_scores
+- title: Package
+  contents:
+  - cIPMA-package
