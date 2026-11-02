@@ -7,3 +7,5 @@
 *.Rcheck/
 /man/hello.Rd
 *.png
+!man/figures/*.png
+tam.csv

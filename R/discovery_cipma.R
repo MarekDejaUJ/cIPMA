@@ -66,7 +66,10 @@
 #' @param target_construct String. The name of the dependent variable for cIPMA.
 #' @param scales A named list of theoretical min/max for each indicator.
 #' @param target_level Numeric. Desired target construct level (0-100). Default is 85.
-#' @param nca_rep Integer. Number of permutations for NCA significance. Default 10000.
+#' @param nca_rep Deprecated. Number of permutations; use \code{B}.
+#' @param pi Tolerance of the bottleneck, passed to \code{\link{cipma}}. Default 1.
+#' @param B Number of permutations of the significance test, passed to
+#'   \code{\link{cipma}}. Default 1999.
 #' @param algorithm Character. Causal discovery algorithm. Options:
 #'   \itemize{
 #'     \item Score-based: \code{"hc"} (default), \code{"tabu"}
@@ -134,7 +137,7 @@
 #' @importFrom stats sd
 #' @export
 discovery_cipma <- function(data, measurement_model, target_construct, scales,
-                            target_level = 85, nca_rep = 10000,
+                            target_level = 85, nca_rep = NULL, pi = 1, B = 1999L,
                             algorithm = "hc", blacklist = NULL, whitelist = NULL,
                             algorithm.args = list(), nboot = 1000) {
 
@@ -321,7 +324,9 @@ discovery_cipma <- function(data, measurement_model, target_construct, scales,
     scales = scales,
     target_level = target_level,
     nca_rep = nca_rep,
-    pls_model = pls_model
+    pls_model = pls_model,
+    pi = pi,
+    B = B
   )
 
   result$learned_graph <- learned_graph

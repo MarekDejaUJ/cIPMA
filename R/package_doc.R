@@ -1,14 +1,23 @@
 #' cIPMA: Combined Importance-Performance Map Analysis
 #'
 #' @description
-#' The cIPMA package allows researchers to conduct a combined Importance-Performance Map Analysis
-#' by integrating results from PLS-SEM (using seminr) and Necessary Condition Analysis (using NCA).
+#' The cIPMA package combines the importance-performance map analysis of a
+#' PLS-SEM model, estimated with seminr, with Quantile Necessary Condition
+#' Analysis of each predictor, computed with qnca. \code{\link{cipma}} runs the
+#' analysis; \code{summary()} reports the results at three levels of detail;
+#' \code{\link{cipma_diagnostics}} runs the QNCA diagnostics;
+#' \code{\link{cipma_report}} writes a full report; \code{plot()} draws the
+#' combined map and the tolerance paths.
 #'
 #' @references
 #' Hauff, S., Richter, N. F., Sarstedt, M., & Ringle, C. M. (2024).
-#' Importance and performance in PLS-SEM and NCA: Introducing the combined importance-performance map analysis (cIPMA).
-#' Journal of Retailing and Consumer Services, 78, 103723.
+#' Importance and performance in PLS-SEM and NCA: Introducing the combined
+#' importance-performance map analysis (cIPMA). Journal of Retailing and
+#' Consumer Services, 78, 103723. \doi{10.1016/j.jretconser.2024.103723}
 #'
-#' @docType package
-#' @name cIPMA
+#' Dul, J. (2016). Necessary Condition Analysis (NCA): Logic and methodology of
+#' "necessary but not sufficient" causality. Organizational Research Methods,
+#' 19(1), 10-52. \doi{10.1177/1094428115584005}
+#'
+#' @keywords internal
 "_PACKAGE"

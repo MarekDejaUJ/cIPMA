@@ -4,16 +4,28 @@
 \alias{plot.cipma}
 \title{Plot cIPMA Results}
 \usage{
-\method{plot}{cipma}(x, ...)
+\method{plot}{cipma}(x, type = c("map", "path", "bottleneck"), scale = c("zoom", "full"), ...)
 }
 \arguments{
-\item{x}{A cIPMA object returned by the cipma function.}
+\item{x}{A cipma object returned by \code{\link{cipma}}.}
 
-\item{...}{Additional arguments (not used).}
+\item{type}{One of \code{"map"}, \code{"path"} (effect size across
+tolerances) or \code{"bottleneck"} (required level at the target level
+across tolerances).}
+
+\item{scale}{One of \code{"zoom"} or \code{"full"}; used by the map.}
+
+\item{...}{Ignored.}
 }
 \value{
 A ggplot object.
 }
 \description{
-Visualizes the Combined Importance-Performance Map Analysis results using a bubble chart.
+Draws the combined map, the tolerance path of the effect sizes or the
+tolerance path of the required levels, in grey scale. On the map, white
+bubbles mark the predictors necessary at \code{pi = 1}, with a size given by
+the share of cases below the required level at the chosen tolerance, and
+black dots mark the other predictors. \code{scale = "zoom"} fits the axes to
+the results; \code{scale = "full"} shows performance on the whole 0-100 scale
+and importance from 0 to the next tenth above the largest total effect.
 }

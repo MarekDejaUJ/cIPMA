@@ -1,0 +1,50 @@
+cff-version: 1.2.0
+message: "Cite the software and the article on the method of the combined importance-performance map analysis."
+type: software
+title: "cIPMA: Combined Importance-Performance Map Analysis"
+abstract: >-
+  R package that combines the importance-performance map analysis of a PLS-SEM
+  model, estimated with seminr, with Quantile Necessary Condition Analysis of
+  each predictor, computed with qnca.
+authors:
+  - family-names: Deja
+    given-names: Marek
+    orcid: "https://orcid.org/0000-0003-0015-2322"
+    affiliation: Jagiellonian University
+version: 0.2.0
+license: GPL-3.0-only
+repository-code: "https://github.com/MarekDejaUJ/cIPMA"
+url: "https://marekdejauj.github.io/cIPMA/"
+doi: 10.5281/zenodo.18656578
+keywords:
+  - importance-performance map analysis
+  - PLS-SEM
+  - necessary condition analysis
+  - quantile necessary condition analysis
+  - R
+references:
+  - type: article
+    title: "Importance and performance in PLS-SEM and NCA: Introducing the combined importance-performance map analysis (cIPMA)"
+    authors:
+      - family-names: Hauff
+        given-names: Sven
+      - family-names: Richter
+        given-names: Nicole Franziska
+      - family-names: Sarstedt
+        given-names: Marko
+      - family-names: Ringle
+        given-names: Christian M.
+    journal: "Journal of Retailing and Consumer Services"
+    year: 2024
+    volume: 78
+    start: 103723
+    doi: 10.1016/j.jretconser.2024.103723
+  - type: article
+    title: "Quantile Necessary Condition Analysis: A Tolerance-Parameterized Generalization of Necessary Condition Analysis"
+    authors:
+      - family-names: Deja
+        given-names: Marek
+        orcid: "https://orcid.org/0000-0003-0015-2322"
+    journal: "Quality & Quantity"
+    year: 2026
+    status: in-press

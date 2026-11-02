@@ -2,3 +2,11 @@
 ^\.Rproj\.user$
 ^cipma_plot\.png$
 ^tam\.csv$
+^CITATION\.cff$
+^cran-comments\.md$
+^CRAN-SUBMISSION$
+^LICENSE$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.github$

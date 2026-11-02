@@ -1,23 +1,96 @@
 #' Run Combined Importance-Performance Map Analysis (cIPMA)
 #'
+#' Combines the importance-performance map analysis of a PLS-SEM model with
+#' Quantile Necessary Condition Analysis (QNCA) of each predictor of the target
+#' construct (Hauff et al. 2024). Importance is the total effect on the target
+#' construct, and performance is the mean of the latent variable scores rescaled
+#' to 0-100. Necessity is decided at the strict limit \code{pi = 1}, where the
+#' QNCA frontier equals the CE-FDH ceiling of Necessary Condition Analysis: a
+#' predictor is necessary when its CE-FDH effect size reaches 0.10 and its
+#' permutation p-value stays below 0.05. The tolerance \code{pi} sets the share
+#' \code{1 - pi} of cases that attain the target level and may sit below the
+#' reported requirement; the bottleneck, the share of cases failing it and the
+#' effect size at \code{pi} follow the chosen tolerance. The tolerance path
+#' repeats the effect size and the bottleneck for every tolerance in
+#' \code{pi_path}.
+#'
 #' @param model A bootstrapped seminr model object.
-#' @param target_construct String. The name of the dependent variable.
+#' @param target_construct String. The name of the target construct.
 #' @param data The raw data frame used for the model.
-#' @param scales A named list of theoretical min/max for indicators.
-#' @param target_level Numeric. The desired level of the target construct (0-100 scale). Default is 85.
-#' @param nca_rep Integer. Number of permutations for NCA. Default 10000.
-#' @param pls_model Optional. The base (non-bootstrapped) seminr model for full diagnostics.
+#' @param scales A named list of theoretical minimum and maximum per indicator.
+#' @param target_level Numeric. The desired level of the target construct on the
+#'   0-100 scale. Default 85.
+#' @param nca_rep Deprecated. Number of permutations; use \code{B}.
+#' @param pls_model Optional. The base (non-bootstrapped) seminr model for the
+#'   assumption checks.
+#' @param pi Tolerance in (0, 1] for the bottleneck and the effect size at the
+#'   chosen tolerance. Default 1, which reproduces the CE-FDH results of NCA.
+#' @param pi_path Tolerances of the tolerance path. Default 1.00 to 0.90 in steps
+#'   of 0.01.
+#' @param B Number of permutations of the significance test. Default 1999; 0
+#'   skips the test.
+#' @param n_grid Number of outcome levels of the QNCA effect sizes. Default 400.
+#' @param n_grid_test Number of outcome levels inside the permutation test.
+#'   Default 100.
+#' @param seed Optional seed of the permutation test; the random number state of
+#'   the session is restored afterwards.
 #'
-#' @return A cipma object containing cIPMA results, bottleneck summary, and the PLS model.
+#' @return An object of class \code{cipma}: a list with the combined results
+#'   (\code{cIPMA_results}), the bottleneck at the target level
+#'   (\code{Bottleneck_summary}), the bottleneck table across outcome levels
+#'   (\code{Bottleneck_full}), the tolerance path (\code{Tolerance_Path}), the
+#'   settings, the rescaled scores and the models.
 #'
-#' @importFrom NCA nca_analysis
+#' @references Hauff, S., Richter, N. F., Sarstedt, M., & Ringle, C. M. (2024).
+#'   Importance and performance in PLS-SEM and NCA: Introducing the combined
+#'   importance-performance map analysis (cIPMA). Journal of Retailing and
+#'   Consumer Services, 78, 103723. \doi{10.1016/j.jretconser.2024.103723}
+#'
+#' @examples
+#' \donttest{
+#' library(seminr)
+#' mm <- constructs(
+#'   composite("Image", multi_items("IMAG", 1:5)),
+#'   composite("Expectation", multi_items("CUEX", 1:3)),
+#'   composite("Value", multi_items("PERV", 1:2)),
+#'   composite("Satisfaction", multi_items("CUSA", 1:3))
+#' )
+#' sm <- relationships(
+#'   paths(from = c("Image", "Expectation", "Value"), to = "Satisfaction")
+#' )
+#' pls <- estimate_pls(mobi, mm, sm)
+#' boot <- bootstrap_model(pls, nboot = 50, cores = 1, seed = 1)
+#' scales <- setNames(rep(list(c(1, 10)), ncol(mobi)), names(mobi))
+#' res <- cipma(boot, "Satisfaction", mobi, scales, target_level = 80,
+#'              pi = 0.95, B = 99, seed = 1, pls_model = pls)
+#' res
+#' summary(res)
+#' }
 #' @importFrom stats pnorm sd
 #' @export
-cipma <- function(model, target_construct, data, scales, target_level = 85, nca_rep = 10000, pls_model = NULL) {
+cipma <- function(model, target_construct, data, scales, target_level = 85,
+                  nca_rep = NULL, pls_model = NULL, pi = 1,
+                  pi_path = seq(1, 0.90, by = -0.01), B = 1999L, n_grid = 400L,
+                  n_grid_test = 100L, seed = NULL) {
 
   if (is.null(model$boot_paths)) {
     stop("The seminr model must be bootstrapped to obtain CIs and p-values.")
   }
+  if (!is.null(nca_rep)) {
+    warning("'nca_rep' is deprecated; the number of permutations is now set by 'B'.")
+    B <- nca_rep
+  }
+  if (length(pi) != 1L || !is.finite(pi) || pi <= 0 || pi > 1) {
+    stop("'pi' must be one number in (0, 1].")
+  }
+  if (length(pi_path) < 1L || any(!is.finite(pi_path)) || any(pi_path <= 0 | pi_path > 1)) {
+    stop("'pi_path' must hold numbers in (0, 1].")
+  }
+  if (length(target_level) != 1L || !is.finite(target_level) ||
+      target_level < 0 || target_level > 100) {
+    stop("'target_level' must be one number in [0, 100].")
+  }
+  pi_path <- sort(unique(round(c(pi_path, 1, pi), 9)), decreasing = TRUE)
 
   smry <- summary(model)
   boot_total <- smry$bootstrapped_total_paths
@@ -109,117 +182,81 @@ cipma <- function(model, target_construct, data, scales, target_level = 85, nca_
     }
   }
 
-  nca_data <- lv_df[, c(predictors, target_construct)]
+  Y <- lv_df[[target_construct]]
+  levels_full <- sort(unique(c(seq(0, 100, by = 10), target_level)))
 
-  nca_res_sig <- NCA::nca_analysis(
-    data = nca_data,
-    x = predictors,
-    y = target_construct,
-    ceilings = "ce_fdh",
-    corner = 1,
-    test.rep = nca_rep,
-    steps = 10
-  )
+  nec <- data.frame(Construct = predictors, d = NA_real_, p_value = NA_real_,
+                    Is_Necessary = NA, d_pi = NA_real_, p_pi = NA_real_,
+                    stringsAsFactors = FALSE)
+  bn <- data.frame(Construct = predictors, Required_Level = NA_real_, Status = NA_character_,
+                   Fail_Count = NA_real_, Fail_Percentage = NA_real_, stringsAsFactors = FALSE)
+  path_rows <- list()
+  full_rows <- list()
 
-  nca_stats <- data.frame(
-    Construct = predictors,
-    NCA_d = NA,
-    NCA_p_value = NA,
-    Is_Necessary = FALSE,
-    stringsAsFactors = FALSE
-  )
+  with_seed(seed, {
+    for (i in seq_along(predictors)) {
+      pred <- predictors[i]
+      X <- lv_df[[pred]]
+      ok <- is.finite(X) & is.finite(Y)
+      x <- X[ok]
+      y <- Y[ok]
 
-  for (i in 1:nrow(nca_stats)) {
-    pred <- nca_stats$Construct[i]
-    if (!is.null(nca_res_sig$tests[[pred]])) {
-      nca_stats$NCA_d[i] <- nca_res_sig$tests[[pred]]$ce_fdh$observed
-      nca_stats$NCA_p_value[i] <- nca_res_sig$tests[[pred]]$ce_fdh$p_value
-    } else {
-      nca_stats$NCA_d[i] <- nca_res_sig$summaries[[pred]]$params[2]
+      nec$d[i] <- qnca::nca_ce_fdh_d(x, y)
+      nec$p_value[i] <- qnca_pvalue(x, y, 1, n_grid_test, B)
+      if (!is.na(nec$p_value[i])) {
+        nec$Is_Necessary[i] <- nec$d[i] >= 0.10 && nec$p_value[i] < 0.05
+      }
+      if (pi < 1) {
+        nec$d_pi[i] <- qnca_effect(x, y, pi, n_grid)
+        nec$p_pi[i] <- qnca_pvalue(x, y, pi, n_grid_test, B)
+      } else {
+        nec$d_pi[i] <- nec$d[i]
+        nec$p_pi[i] <- nec$p_value[i]
+      }
+
+      req <- qnca_requirement(x, y, pi, target_level)
+      fail <- qnca_failing(x, req$required)
+      bn$Required_Level[i] <- req$required
+      bn$Status[i] <- req$status
+      bn$Fail_Count[i] <- fail[["count"]]
+      bn$Fail_Percentage[i] <- fail[["percent"]]
+
+      for (p in pi_path) {
+        rq <- qnca_requirement(x, y, p, target_level)
+        fl <- qnca_failing(x, rq$required)
+        path_rows[[length(path_rows) + 1L]] <- data.frame(
+          Construct = pred, pi = p,
+          d = if (p == 1) nec$d[i] else qnca_effect(x, y, p, n_grid),
+          Required_Level = rq$required, Status = rq$status,
+          Fail_Percentage = fl[["percent"]], stringsAsFactors = FALSE)
+      }
+
+      for (lvl in levels_full) {
+        rq <- qnca_requirement(x, y, pi, lvl)
+        full_rows[[length(full_rows) + 1L]] <- data.frame(
+          Construct = pred, Outcome_Level = lvl, Required_Level = rq$required,
+          Status = rq$status, stringsAsFactors = FALSE)
+      }
     }
+  })
 
-    d_val <- nca_stats$NCA_d[i]
-    p_val <- nca_stats$NCA_p_value[i]
-
-    if (!is.na(d_val) && !is.na(p_val)) {
-      nca_stats$Is_Necessary[i] <- (d_val >= 0.10 & p_val < 0.05)
-    }
-  }
-
-  bottleneck_results <- data.frame(
-    Construct = predictors,
-    Required_Level = NA,
-    Fail_Percentage = NA,
-    Fail_Count = NA,
-    stringsAsFactors = FALSE
-  )
-
-  eps <- .Machine$double.eps^0.5
-
-  for (i in 1:nrow(bottleneck_results)) {
-    pred <- bottleneck_results$Construct[i]
-
-    model_b <- NCA::nca_analysis(
-      data = nca_data,
-      x = pred,
-      y = target_construct,
-      ceilings = "ce_fdh",
-      corner = 1,
-      bottleneck.y = "actual",
-      bottleneck.x = "actual",
-      steps = c(target_level, NA)
-    )
-
-    full_bn_table <- model_b$bottlenecks$ce_fdh
-
-    if (target_construct %in% colnames(full_bn_table)) {
-      y_vals <- as.numeric(as.character(full_bn_table[[target_construct]]))
-    } else {
-      y_vals <- as.numeric(as.character(full_bn_table[, 1]))
-    }
-
-    target_idx <- which(abs(y_vals - target_level) < 0.001)[1]
-
-    if (is.na(target_idx)) {
-      raw_threshold <- NA
-    } else {
-      raw_threshold <- suppressWarnings(as.numeric(as.character(full_bn_table[target_idx, pred])))
-    }
-
-    bottleneck_results$Required_Level[i] <- raw_threshold
-
-    if (is.na(raw_threshold)) {
-      count_below <- 0
-    } else {
-      count_below <- sum(lv_df[[pred]] < (raw_threshold - eps), na.rm = TRUE)
-    }
-
-    bottleneck_results$Fail_Count[i] <- count_below
-    bottleneck_results$Fail_Percentage[i] <- (count_below / nrow(lv_df)) * 100
-  }
-
-  final_table_A <- merge(pls_res, nca_stats, by = "Construct")
-  final_table_A <- merge(final_table_A,
-                         bottleneck_results[, c("Construct", "Fail_Percentage")],
-                         by = "Construct")
-
-  nca_full <- NCA::nca_analysis(
-    data = nca_data,
-    x = predictors,
-    y = target_construct,
-    ceilings = "ce_fdh",
-    corner = 1,
-    bottleneck.y = "actual",
-    bottleneck.x = "actual",
-    steps = 20
-  )
+  results <- merge(pls_res, nec, by = "Construct", sort = FALSE)
+  results <- merge(results, bn[, c("Construct", "Required_Level", "Fail_Percentage")],
+                   by = "Construct", sort = FALSE)
+  results <- results[match(predictors, results$Construct), ]
+  rownames(results) <- NULL
 
   output <- list(
-    cIPMA_results = final_table_A,
-    Bottleneck_summary = bottleneck_results,
-    Bottleneck_full = nca_full$bottlenecks$ce_fdh,
-    NCA_summary = nca_res_sig,
+    cIPMA_results = results,
+    Bottleneck_summary = bn,
+    Bottleneck_full = do.call(rbind, full_rows),
+    Tolerance_Path = do.call(rbind, path_rows),
     Target_Level = target_level,
+    Tolerance = pi,
+    Settings = list(pi = pi, pi_path = pi_path, B = B, n_grid = n_grid,
+                    n_grid_test = n_grid_test, seed = seed,
+                    n = sum(is.finite(Y)),
+                    qnca_version = as.character(utils::packageVersion("qnca"))),
     Predictors = predictors,
     Dependent = target_construct,
     Data_Rescaled = lv_df,
@@ -230,7 +267,6 @@ cipma <- function(model, target_construct, data, scales, target_level = 85, nca_
   class(output) <- "cipma"
   return(output)
 }
-
 
 #' Check cIPMA Assumptions and Model Diagnostics
 #'

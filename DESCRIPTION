@@ -1,30 +1,41 @@
 Package: cIPMA
 Type: Package
 Title: Combined Importance-Performance Map Analysis
-Version: 0.1.6
-Author: person("Marek", "Deja", 
-                  email = "marek.deja@uj.edu.pl", 
-                  role = c("aut", "cre"),
-                  comment = c(ORCID = "0000-0003-0015-2322")
-Maintainer: Marek Deja <marek.deja@uj.edu.pl>
-Description: Integrates PLS-SEM importance-performance analysis via 'seminr' with Necessary 
-    Condition Analysis via 'NCA' to jointly assess sufficiency and necessity of 
-    predictors in structural equation models. Provides automated indicator rescaling, 
-    bottleneck computation, assumption diagnostics (reliability, HTMT, VIF), and 
-    publication-ready visualization. Includes experimental support for exploratory 
-    structure learning via 'bnlearn' with twelve algorithms and whitelist/blacklist 
-    constraints.
+Version: 0.2.0
+Authors@R: person("Marek", "Deja", email = "marek.deja@uj.edu.pl",
+    role = c("aut", "cre", "cph"), comment = c(ORCID = "0000-0003-0015-2322"))
+Description: Combines the importance-performance map analysis (IPMA) of
+    partial least squares structural equation modelling (PLS-SEM), estimated
+    with 'seminr', with Quantile Necessary Condition Analysis (QNCA) of each
+    predictor, following the combined importance-performance map analysis
+    (cIPMA) of Hauff et al. (2024) <doi:10.1016/j.jretconser.2024.103723>.
+    Necessity is decided at the strict limit, where the QNCA frontier equals
+    the ceiling envelopment-free disposal hull (CE-FDH) ceiling of Necessary
+    Condition Analysis (NCA) of Dul (2016) <doi:10.1177/1094428115584005>, and
+    a tolerance sets the share of successful cases allowed below each
+    bottleneck. The package reports the combined map, the bottleneck at a
+    target level, the path of effect sizes and bottlenecks across tolerances,
+    the QNCA diagnostics, assumption checks (reliability,
+    heterotrait-monotrait ratio, variance inflation factor) and plots on a
+    zoomed or a full scale. Exploratory structure learning with 'bnlearn' is
+    available as an experimental option.
 License: GPL-3
+URL: https://github.com/MarekDejaUJ/cIPMA, https://marekdejauj.github.io/cIPMA/
+BugReports: https://github.com/MarekDejaUJ/cIPMA/issues
 Encoding: UTF-8
-LazyData: true
+Language: en-GB
+Depends: R (>= 3.6.0)
 Imports:
     seminr,
-    NCA,
+    qnca,
     ggplot2,
     ggrepel,
-    stats
-Suggests: 
-    bnlearn
-RoxygenNote: 7.3.3
-URL: https://github.com/MarekDejaUJ/cIPMA
-BugReports: https://github.com/MarekDejaUJ/cIPMA/issue
+    stats,
+    utils
+Suggests:
+    bnlearn,
+    NCA,
+    testthat (>= 3.0.0)
+Remotes: MarekDejaUJ/qnca/r
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0

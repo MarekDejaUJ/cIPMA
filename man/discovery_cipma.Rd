@@ -10,7 +10,9 @@ discovery_cipma(
   target_construct,
   scales,
   target_level = 85,
-  nca_rep = 10000,
+  nca_rep = NULL,
+  pi = 1,
+  B = 1999L,
   algorithm = "hc",
   blacklist = NULL,
   whitelist = NULL,
@@ -29,7 +31,12 @@ discovery_cipma(
 
 \item{target_level}{Numeric. Desired target construct level (0-100). Default is 85.}
 
-\item{nca_rep}{Integer. Number of permutations for NCA significance. Default 10000.}
+\item{nca_rep}{Deprecated. Number of permutations; use \code{B}.}
+
+\item{pi}{Tolerance of the bottleneck, passed to \code{\link{cipma}}. Default 1.}
+
+\item{B}{Number of permutations of the significance test, passed to
+\code{\link{cipma}}. Default 1999.}
 
 \item{algorithm}{Character. Causal discovery algorithm. Options:
 \itemize{
