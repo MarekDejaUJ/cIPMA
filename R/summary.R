@@ -107,7 +107,7 @@ cipma_readings <- function(x) {
     req <- switch(b$Status[i],
       "required" = sprintf("the required level of %s for %s >= %s at pi = %s is %s, with %s%% of the cases below the required level",
                            r$Construct[i], x$Dependent, format(x$Target_Level), pi_label(x$Tolerance),
-                           fmt_num(b$Required_Level[i], 2), fmt_num(b$Fail_Percentage[i], 1)),
+                           fmt_num(b$Required_Level[i], 3), fmt_num(b$Fail_Percentage[i], 1)),
       "not necessary" = sprintf("the target level of %s sets no requirement on %s at pi = %s",
                                 x$Dependent, r$Construct[i], pi_label(x$Tolerance)),
       "not attained" = sprintf("no case attains the target level of %s", x$Dependent))

@@ -38,6 +38,29 @@ test_that("pi = 1 agrees with a live run of the NCA package", {
   }
 })
 
+test_that("the failing shares at pi = 1 equal the percentile bottleneck table of NCA", {
+  # The percentile bottleneck table of NCA is the source of the failing shares of
+  # the original cIPMA (Hauff et al. 2024, Table 5).
+  skip_if_not_installed("NCA")
+  for (level in c(60, 80)) {
+    res <- mobi_cipma(target_level = level, B = 0L)
+    s <- res$Data_Rescaled
+    for (cn in res$Predictors) {
+      m <- NCA::nca_analysis(s, cn, "Loyalty", ceilings = "ce_fdh", bottleneck.x = "percentile",
+                             bottleneck.y = "actual", steps = c(level, NA))
+      bt <- m$bottlenecks$ce_fdh
+      row <- which(abs(as.numeric(as.character(bt[[1]])) - level) < 1e-6)
+      nca_pct <- suppressWarnings(as.numeric(as.character(bt[row, cn])))
+      b <- res$Bottleneck_summary[res$Bottleneck_summary$Construct == cn, ]
+      if (is.na(nca_pct)) {
+        expect_equal(b$Fail_Count, 0)
+      } else {
+        expect_equal(round(b$Fail_Percentage, 1), nca_pct)
+      }
+    }
+  }
+})
+
 test_that("the tolerance path covers 1.00 to 0.90 and moves in one direction", {
   res <- mobi_cipma(target_level = 80, pi = 0.95, B = 0L)
   p <- res$Tolerance_Path

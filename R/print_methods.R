@@ -19,7 +19,7 @@ fmt_yes <- function(x) {
   out
 }
 
-fmt_required <- function(required, status, digits = 2) {
+fmt_required <- function(required, status, digits = 3) {
   out <- fmt_num(required, digits)
   out[status == "not necessary"] <- "NN"
   out[status == "not attained"] <- "NA"

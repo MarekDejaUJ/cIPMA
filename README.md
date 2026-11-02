@@ -61,12 +61,12 @@ res
 cIPMA: target Loyalty at level 80 (n = 250, tolerance pi = 0.95)
 
     Construct Importance Performance     d      p Necessary Required Failing
-        Image      0.399        73.5 0.151 0.0045       yes    63.57   21.6%
-  Expectation      0.218        72.5 0.122 0.0155       yes    56.42   10.0%
-      Quality      0.323        75.0 0.151 0.0045       yes    62.84   16.4%
-        Value      0.101        62.3 0.016 0.5550        no    44.44   14.8%
- Satisfaction      0.521        72.5 0.140 0.0005       yes    67.21   29.2%
-   Complaints      0.067        67.4 0.016 0.3755        no    44.44   10.8%
+        Image      0.399        73.5 0.151 0.0045       yes   63.566   21.6%
+  Expectation      0.218        72.5 0.122 0.0155       yes   56.419   10.0%
+      Quality      0.323        75.0 0.151 0.0045       yes   62.839   16.4%
+        Value      0.101        62.3 0.016 0.5550        no   44.444   14.8%
+ Satisfaction      0.521        72.5 0.140 0.0005       yes   67.209   29.2%
+   Complaints      0.067        67.4 0.016 0.3755        no   44.444   10.8%
 
 Necessary: CE-FDH d >= 0.10 and p < 0.05 at pi = 1.00. Required and Failing:
 bottleneck at pi = 0.95 (NN: no requirement; NA: level not attained).
@@ -74,7 +74,7 @@ summary(x) adds the readings; summary(x, detail = "full") adds the tolerance pat
 the bottleneck table; cipma_diagnostics(x) runs the QNCA diagnostics.
 ```
 
-The columns `d`, `p` and `Necessary` give the decision at the strict limit. `Required` gives the level of each predictor required for loyalty of at least 80 at `pi = 0.95`, and `Failing` gives the share of customers below the required level. Value and complaints carry no necessity, and the map draws both as black dots.
+The columns `d`, `p` and `Necessary` give the decision at the strict limit. `Required` gives the level of each predictor required for loyalty of at least 80 at `pi = 0.95`, and `Failing` gives the share of customers below the required level. The required levels carry three decimals, as in the bottleneck table of NCA, and the failing shares at `pi = 1` equal the percentile bottleneck table of NCA, the source of the failing shares in Hauff et al. (2024). Value and complaints carry no necessity, and the map draws both as black dots.
 
 ```r
 plot(res)
